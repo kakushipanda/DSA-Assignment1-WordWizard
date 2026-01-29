@@ -5,8 +5,6 @@ rem === Clean and (re)create build dir ===
 
 mkdir build
 
-cd lib
-
 if not exist vcpkg (
 git clone https://github.com/microsoft/vcpkg.git 
 )
