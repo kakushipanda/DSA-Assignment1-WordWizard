@@ -14,16 +14,18 @@ add_executable(WordWizard
     ${imgui_source_files}
 )
 
+if(MSVC)
+    set_property(TARGET WordWizard PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
 target_link_libraries(WordWizard
     PRIVATE
         imgui::imgui
         glfw
         glad::glad
-	imm32.lib 
-    winmm.lib 
-    gdi32.lib 
-    shell32.lib
-    ucrt.lib
-    vcruntime.lib
-    msvcrt.lib
+        imm32
+        winmm
+        gdi32
+        shell32
 )

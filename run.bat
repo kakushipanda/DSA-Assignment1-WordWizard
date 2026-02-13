@@ -1,33 +1,83 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-rem === Clean and (re)create build dir ===
+echo =========================================
+echo WordWizard Build Script
+echo =========================================
 
-mkdir build
+set VCPKG_DIR=vcpkg
+set BUILD_DIR=build
+set TRIPLET=x64-windows
 
-if not exist vcpkg (
-git clone https://github.com/microsoft/vcpkg.git 
+rem -----------------------------------------
+rem Step 1: Ensure vcpkg exists
+rem -----------------------------------------
+if not exist %VCPKG_DIR% (
+    echo Cloning vcpkg...
+    git clone https://github.com/microsoft/vcpkg.git %VCPKG_DIR%
 )
 
-cd..
+rem -----------------------------------------
+rem Step 2: Bootstrap vcpkg
+rem -----------------------------------------
+if not exist %VCPKG_DIR%\vcpkg.exe (
+    echo Bootstrapping vcpkg...
+    call %VCPKG_DIR%\bootstrap-vcpkg.bat
+)
 
-set "curDir=%~dp0"
-pushd "%curDir%build" ||	 (
-  echo Failed to enter build directory.
-  exit /b 1
-)	
+rem -----------------------------------------
+rem Step 3: Install dependencies
+rem -----------------------------------------
+echo Installing dependencies...
+%VCPKG_DIR%\vcpkg install --triplet %TRIPLET%
 
-rem ---- Configure (Visual Studio 2022, x64) ----
-cmake -G "Visual Studio 17 2022" -A x64 .. 
 if errorlevel 1 (
-  echo CMake configure failed.
-  popd
-  pause
+    echo Dependency installation failed.
+    pause
+    exit /b 1
 )
-popd
 
-cmake --build build -S .
+rem -----------------------------------------
+rem Step 4: Clean build directory
+rem -----------------------------------------
+if exist %BUILD_DIR% (
+    echo Cleaning build directory...
+    rmdir /s /q %BUILD_DIR%
+)
 
-echo Builds completed successfully.
+mkdir %BUILD_DIR%
 
+rem -----------------------------------------
+rem Step 5: Configure CMake
+rem -----------------------------------------
+echo Configuring project...
+
+cmake -B %BUILD_DIR% -S . ^
+ -G "Visual Studio 17 2022" ^
+ -A x64 ^
+ -DCMAKE_TOOLCHAIN_FILE=./%VCPKG_DIR%/scripts/buildsystems/vcpkg.cmake
+
+if errorlevel 1 (
+    echo CMake configuration failed.
+    pause
+    exit /b 1
+)
+
+rem -----------------------------------------
+rem Step 6: Build project
+rem -----------------------------------------
+echo Building project...
+
+cmake --build %BUILD_DIR% --config Debug
+
+if errorlevel 1 (
+    echo Build failed.
+    pause
+    exit /b 1
+)
+
+echo.
+echo =========================================
+echo Build completed successfully.
+echo =========================================
 pause
