@@ -6,13 +6,15 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <algorithm>
+#include <fstream>
+
+#include "hashmap.h"
 
 // --- THE WORD WIZARD LOGIC ---
 class WordWizard {
 private:
-    std::unordered_map<std::string, std::vector<std::string>> dictionary;
+    AnagramHashMap dictionary{"Input/words_alpha.txt"};
     char inputBuffer[128] = "";
     std::vector<std::string> results;
 
@@ -26,17 +28,6 @@ private:
 
 public:
     void Init() {
-        // Hardcoded dictionary for demo purposes
-        std::vector<std::string> words = {
-            "star", "rats", "arts", "tsar",
-            "apple", "pale", "leap", "plea",
-            "listen", "silent", "enlist",
-            "evil", "vile", "live", "veil"
-        };
-
-        for (const auto& w : words) {
-            dictionary[sortString(w)].push_back(w);
-        }
     }
 
     void RenderUI() {

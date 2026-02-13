@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.5)
-project(WordWizard)
 
 #find files with extension of .cpp and .h
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
@@ -33,4 +32,16 @@ target_link_libraries(WordWizard
 
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT WordWizard)
+
+
+add_custom_command(TARGET WordWizard POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/Input"
+        "${CMAKE_SOURCE_DIR}/build/src/Input"
+
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/Input"
+	"${CMAKE_SOURCE_DIR}/build/src/Debug/Input"
+	
+)
 
