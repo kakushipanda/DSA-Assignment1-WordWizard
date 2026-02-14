@@ -34,7 +34,7 @@ This will delete the build directory and any compiled outputs.
 _____________________________________________________________________________
 Word Wizard – Quick User Guide
 
-1. Launch the application from build\src\Debug\WordWizard.exe
+1. Launch the application from Executable\WordWizard.exe
 
 2. In the “Word Wizard: Anagram Finder” window:
 
