@@ -19,10 +19,10 @@ private:
     std::vector<std::string> results;
 
     std::string sortString(std::string s) {
-        std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-        std::sort(s.begin(), s.end());
         // Remove non-alpha chars for cleaner matching
         s.erase(std::remove_if(s.begin(), s.end(), [](char c) { return !isalpha(c); }), s.end());
+        std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+        std::sort(s.begin(), s.end());
         return s;
     }
 

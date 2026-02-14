@@ -67,12 +67,11 @@ private:
 public:
 	AnagramHashMap() = delete;
 
-	AnagramHashMap(std::string const& filename) : table() {
+	AnagramHashMap(std::string const& filename) : size(0), table() {
 		std::ifstream input(filename);
 		std::vector<std::string> values;
-		while (input) {
-			std::string buf;
-			input >> buf;
+		std::string buf;
+		while (input >> buf) {
 			values.push_back(buf);
 		}
 		table.resize(static_cast<size_t>(values.size() * load_factor) + 1);
@@ -103,6 +102,6 @@ public:
 	}
 
 	size_t count(const std::string& key) const {
-		return size;
+		return getAnagramList(key).empty() ? 0 : 1;
 	}
 };
