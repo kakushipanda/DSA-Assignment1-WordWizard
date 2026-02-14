@@ -43,5 +43,8 @@ add_custom_command(TARGET WordWizard POST_BUILD
         "${CMAKE_SOURCE_DIR}/Input"
 	"${CMAKE_SOURCE_DIR}/build/src/Debug/Input"
 	
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/Input"
+	"${CMAKE_SOURCE_DIR}/build/src/Release/Input"
 )
 

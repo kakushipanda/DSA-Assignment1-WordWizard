@@ -69,12 +69,15 @@ rem -----------------------------------------
 echo Building project...
 
 cmake --build %BUILD_DIR% --config Debug
+cmake --build %BUILD_DIR% --config Release
 
 if errorlevel 1 (
     echo Build failed.
     pause
     exit /b 1
 )
+
+robocopy "%BUILD_DIR%/src/Release" "%~dp0Executable" /E
 
 echo.
 echo =========================================
