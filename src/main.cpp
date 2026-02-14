@@ -8,26 +8,61 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <chrono>
 
 #include "hashmap.h"
 
 // --- THE WORD WIZARD LOGIC ---
 class WordWizard {
 private:
-    AnagramHashMap dictionary{"Input/words_alpha.txt"};
+    AnagramHashMap dictionary{ "Input/words_alpha.txt" };
     char inputBuffer[128] = "";
-    std::vector<std::string> results;
+
+    std::vector<std::string> resultsHash;
+    std::vector<std::string> resultsLinear;
+
+    // Naive storage of words
+    std::vector<std::string> wordList;
+
+    // Toggle for comparison
+    bool showLinearComparison = false;
+
+    // --- Performance statistics ---
+    size_t lookupCount = 0;
+
+    double hashTotalTimeMs = 0.0;
+    double hashLastTimeMs = 0.0;
+
+    double linearTotalTimeMs = 0.0;
+    double linearLastTimeMs = 0.0;
 
     std::string sortString(std::string s) {
-        // Remove non-alpha chars for cleaner matching
-        s.erase(std::remove_if(s.begin(), s.end(), [](char c) { return !isalpha(c); }), s.end());
+        s.erase(std::remove_if(s.begin(), s.end(),
+            [](char c) { return !isalpha(c); }), s.end());
         std::transform(s.begin(), s.end(), s.begin(), ::tolower);
         std::sort(s.begin(), s.end());
         return s;
     }
 
+    // Naive linear anagram search
+    std::vector<std::string> linearSearch(const std::string& key) {
+        std::vector<std::string> result;
+        for (const auto& word : wordList) {
+            if (sortString(word) == key) {
+                result.push_back(word);
+            }
+        }
+        return result;
+    }
+
 public:
     void Init() {
+        // Load all words for naive search
+        std::ifstream input("Input/words_alpha.txt");
+        std::string buf;
+        while (input >> buf) {
+            wordList.push_back(buf);
+        }
     }
 
     void RenderUI() {
@@ -35,15 +70,39 @@ public:
 
         ImGui::Text("Type letters (e.g., 'astr'):");
 
-        // This input box triggers the search on every keystroke
+        ImGui::Checkbox("Show performance comparison with linear search",
+            &showLinearComparison);
+
         if (ImGui::InputText("##letters", inputBuffer, IM_ARRAYSIZE(inputBuffer))) {
             std::string key = sortString(inputBuffer);
+
+            // --- HASH MAP TIMING ---
+            auto hashStart = std::chrono::high_resolution_clock::now();
+
             if (dictionary.count(key)) {
-                results = dictionary[key];
+                resultsHash = dictionary[key];
             }
             else {
-                results.clear();
+                resultsHash.clear();
             }
+
+            auto hashEnd = std::chrono::high_resolution_clock::now();
+            hashLastTimeMs =
+                std::chrono::duration<double, std::milli>(hashEnd - hashStart).count();
+            hashTotalTimeMs += hashLastTimeMs;
+
+            // --- LINEAR SEARCH (only if enabled) ---
+            if (showLinearComparison) {
+                auto linearStart = std::chrono::high_resolution_clock::now();
+                resultsLinear = linearSearch(key);
+                auto linearEnd = std::chrono::high_resolution_clock::now();
+
+                linearLastTimeMs =
+                    std::chrono::duration<double, std::milli>(linearEnd - linearStart).count();
+                linearTotalTimeMs += linearLastTimeMs;
+            }
+
+            lookupCount++;
         }
 
         ImGui::Separator();
@@ -51,19 +110,52 @@ public:
         if (strlen(inputBuffer) == 0) {
             ImGui::TextDisabled("Waiting for input...");
         }
-        else if (results.empty()) {
-            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "No anagrams found.");
+        else if (resultsHash.empty()) {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                "No anagrams found.");
         }
         else {
-            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Found %d match(es):", (int)results.size());
-            for (const auto& word : results) {
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f),
+                "Found %d match(es):",
+                (int)resultsHash.size());
+            for (const auto& word : resultsHash) {
                 ImGui::BulletText("%s", word.c_str());
             }
+        }
+
+        // --- Performance UI ---
+        ImGui::Separator();
+        ImGui::Text("Hash Map Performance");
+        ImGui::Text("Last lookup: %.4f ms", hashLastTimeMs);
+
+        if (lookupCount > 0) {
+            ImGui::Text("Average: %.4f ms",
+                hashTotalTimeMs / lookupCount);
+        }
+
+        if (showLinearComparison && lookupCount > 0) {
+            ImGui::Separator();
+            ImGui::Text("Linear Search Performance");
+            ImGui::Text("Last lookup: %.4f ms", linearLastTimeMs);
+            ImGui::Text("Average: %.4f ms",
+                linearTotalTimeMs / lookupCount);
+
+            double speedup =
+                (hashLastTimeMs > 0.0)
+                ? (linearLastTimeMs / hashLastTimeMs)
+                : 0.0;
+
+            ImGui::TextColored(
+                ImVec4(0.4f, 1.0f, 0.4f, 1.0f),
+                "Hash map speedup: %.2fx",
+                speedup
+            );
         }
 
         ImGui::End();
     }
 };
+
 
 // --- BOILERPLATE: GLFW & MAIN LOOP ---
 static void glfw_error_callback(int error, const char* description) {
